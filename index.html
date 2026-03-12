@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мое первое Mini App</title>
+    <!-- Подключаем скрипт Telegram (обязательно) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Используем переменные темы Telegram */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            margin: 20px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: var(--tg-theme-button-color, #40a7e3);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 300px;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>Привет, друг!</h1>
+    <div class="card" id="user-info">
+        Загрузка данных...
+    </div>
+    <button id="send-data-btn">Отправить данные в чат</button>
+
+    <script>
+        // Делаем приложение доступным для Telegram
+        const tg = window.Telegram.WebApp;
+
+        // Сообщаем Telegram, что приложение готово к отображению
+        tg.ready();
+
+        // Расширяем приложение на весь доступный экран
+        tg.expand();
+
+        // Получаем информацию о пользователе (initDataUnsafe - для отладки, initData - для отправки на сервер)
+        const user = tg.initDataUnsafe?.user;
+        const userInfoDiv = document.getElementById('user-info');
+
+        if (user) {
+            userInfoDiv.innerHTML = `
+                <strong>Информация о пользователе:</strong><br>
+                ID: ${user.id}<br>
+                Имя: ${user.first_name} ${user.last_name || ''}<br>
+                Юзернейм: @${user.username || 'нет'}<br>
+                Язык: ${user.language_code || 'ru'}
+            `;
+        } else {
+            userInfoDiv.innerHTML = 'Не удалось получить данные пользователя. Убедитесь, что вы открыли приложение через Telegram.';
+        }
+
+        // Настраиваем главную кнопку Telegram (которая в интерфейсе самого мессенджера)
+        const mainButton = tg.MainButton;
+        mainButton.setText("НАЖМИ МЕНЯ");
+        mainButton.show();
+
+        // Обработчик нажатия на кастомную кнопку внутри HTML
+        document.getElementById('send-data-btn').addEventListener('click', function() {
+            // Отправляем данные обратно в бота
+            const dataToSend = {
+                action: 'user_clicked_button',
+                user_id: user?.id,
+                timestamp: Date.now()
+            };
+            
+            // Метод sendData закрывает приложение и отправляет строку в чат с ботом
+            tg.sendData(JSON.stringify(dataToSend));
+            
+            // Или можно просто показать всплывающее окно
+            // tg.showAlert('Привет! Это алерт от Telegram!');
+        });
+
+        // Обработчик нажатия на главную кнопку Telegram
+        mainButton.onClick(function() {
+            tg.showPopup({
+                title: 'Уведомление',
+                message: 'Вы нажали главную кнопку!',
+                buttons: [{type: 'close', text: 'Закрыть'}]
+            });
+        });
+    </script>
+</body>
+</html>
